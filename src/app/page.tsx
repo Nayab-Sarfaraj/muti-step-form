@@ -1,69 +1,82 @@
-import Image from "next/image";
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { createEmptyForm, IntakeForm, PRODUCT_NAMES, PROCEDURE_NAMES, STORAGE_KEY, type YesNo } from "@/lib/intake";
+
+type Gate = "male" | "female" | "prefer-not-to-say" | null;
+type Saved = { form: IntakeForm; screen: number; gate: Gate };
+const family = ["Father had hair loss", "Mother had hair loss", "Siblings with thinning or baldness", "No known family history"];
+const patterns = ["Receding hairline", "Thinning at crown", "Widening part line", "Diffuse thinning", "Patchy loss", "Sudden excessive shedding"];
+const conditions = ["PCOS/PCOD", "Thyroid disorder", "Diabetes", "Autoimmune disease", "Anemia", "None"];
+const triggers = ["Crash dieting or major weight loss", "High stress or emotional trauma", "Fever with illness (COVID, Dengue, Typhoid)", "Recent surgery", "Change in location/water/air quality"];
+
+function Choice({ active, children, onClick, className = "" }: { active: boolean; children: React.ReactNode; onClick: () => void; className?: string }) {
+  return <button type="button" onClick={onClick} className={`min-h-12 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${active ? "border-teal-700 bg-teal-50 text-teal-950 ring-1 ring-teal-700" : "border-stone-200 bg-white text-stone-700 hover:border-teal-300"} ${className}`}>{active && <span className="mr-2 text-teal-700">✓</span>}{children}</button>;
+}
+function YesNo({ value, onChange }: { value: YesNo; onChange: (v: YesNo) => void }) { return <div className="grid grid-cols-2 gap-3"><Choice active={value === "yes"} onClick={() => onChange("yes")} className="text-center">Yes</Choice><Choice active={value === "no"} onClick={() => onChange("no")} className="text-center">No</Choice></div>; }
 
 export default function Home() {
-  return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+  const [form, setForm] = useState<IntakeForm>(createEmptyForm);
+  const [screen, setScreen] = useState(0);
+  const [gate, setGate] = useState<Gate>(null);
+  const [resume, setResume] = useState(false);
+  const [submitted, setSubmitted] = useState(false);
+  const [ageError, setAgeError] = useState("");
+  const [voiceAvailable, setVoiceAvailable] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const update = <K extends keyof IntakeForm>(key: K, value: IntakeForm[K]) => setForm((old) => ({ ...old, [key]: value }));
+  const persist = (newScreen: number) => localStorage.setItem(STORAGE_KEY, JSON.stringify({ form, screen: newScreen, gate }));
+  const go = (newScreen: number) => { persist(newScreen); setScreen(newScreen); window.scrollTo({ top: 0, behavior: "smooth" }); };
+  useEffect(() => {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) try { JSON.parse(raw); setResume(true); } catch { localStorage.removeItem(STORAGE_KEY); }
+    setVoiceAvailable(Boolean(window.SpeechRecognition || window.webkitSpeechRecognition));
+  }, []);
+  const toggle = (key: "family_history" | "pattern" | "diagnosed_conditions" | "past_6_months", value: string, exclusive?: string) => {
+    const values = form[key] ?? [];
+    const next = value === exclusive ? (values.includes(value) ? [] : [value]) : values.includes(value) ? values.filter((item) => item !== value) : [...values.filter((item) => item !== exclusive), value];
+    update(key, next);
+  };
+  const next = () => {
+    if (screen === 1 && (!form.age_hair_loss_began || form.age_hair_loss_began < 1)) { setAgeError("Please enter the age when you first noticed hair loss."); return; }
+    if (screen === 8) { localStorage.removeItem(STORAGE_KEY); setSubmitted(true); return; }
+    go(screen + 1);
+  };
+  const disabled = screen === 1 && (!form.age_hair_loss_began || !form.duration) || screen === 7 && form.consent !== "yes";
+  const json = useMemo(() => JSON.stringify(form, null, 2), [form]);
+  const startVoice = () => {
+    const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if (!Recognition) return;
+    const recognition = new Recognition();
+    recognition.lang = "en-IN";
+    recognition.interimResults = false;
+    recognition.onstart = () => setRecording(true);
+    recognition.onend = () => setRecording(false);
+    recognition.onerror = () => setRecording(false);
+    recognition.onresult = (event) => update("describe", [form.describe, event.results[0][0].transcript].filter(Boolean).join(" "));
+    recognition.start();
+  };
+  const heading = (name: string, copy?: string) => <><h1 className="mt-2 text-3xl font-bold tracking-tight">{name}</h1>{copy && <p className="mt-2 text-stone-600">{copy}</p>}</>;
+  const chips = (key: "family_history" | "pattern" | "diagnosed_conditions" | "past_6_months", values: string[], exclusive?: string) => <div className="mt-4 grid gap-2">{values.map((value) => <Choice key={value} active={(form[key] ?? []).includes(value)} onClick={() => toggle(key, value, exclusive)}>{value}</Choice>)}</div>;
+
+  const screenContent = () => {
+    if (screen === 0) return <div className="flex h-full flex-col justify-center"><div className="mb-8 grid size-16 place-items-center rounded-3xl bg-teal-100 text-3xl">✦</div><h1 className="max-w-sm text-4xl font-bold tracking-tight">A calmer start to your hair-care visit.</h1><p className="mt-5 max-w-sm text-lg leading-8 text-stone-600">A few quick questions, mostly tapping. Your clinician will have a clearer picture before you meet.</p><p className="mt-8 text-sm font-semibold text-teal-700">About 2 minutes · saved as you go</p></div>;
+    if (screen === 1) return <>{heading("When did you first notice hair loss?")}<div className="mt-7 rounded-3xl bg-stone-50 p-5"><label className="text-sm font-bold">Your age at the time</label><div className="mt-3 flex items-center gap-3"><button type="button" className="grid size-11 place-items-center rounded-full border border-stone-200 text-xl" onClick={() => update("age_hair_loss_began", Math.max(1, (form.age_hair_loss_began ?? 20) - 1))}>−</button><input inputMode="numeric" aria-label="Age hair loss began" className="h-12 w-20 rounded-xl border border-stone-200 bg-white text-center text-xl font-bold" value={form.age_hair_loss_began ?? ""} onBlur={() => setAgeError("")} onChange={(e) => update("age_hair_loss_began", e.target.value ? Number(e.target.value) : null)} /><button type="button" className="grid size-11 place-items-center rounded-full border border-stone-200 text-xl" onClick={() => update("age_hair_loss_began", (form.age_hair_loss_began ?? 19) + 1)}>+</button></div>{ageError && <p className="mt-2 text-sm text-red-600">{ageError}</p>}</div><h2 className="mt-7 text-lg font-bold">How long has it been going on?</h2><div className="mt-3 grid gap-2">{["Less than 6 months", "6-12 months", "Over a year"].map((item) => <Choice key={item} active={form.duration === item} onClick={() => update("duration", item as IntakeForm["duration"])}>{item}</Choice>)}</div></>;
+    if (screen === 2) return <>{heading("What runs in the family?", "Choose all that apply.")}{chips("family_history", family, "No known family history")}<h2 className="mt-8 text-lg font-bold">What pattern are you noticing?</h2>{chips("pattern", [...patterns, "Not sure / skip this"], "Not sure / skip this")}</>;
+    if (screen === 3) return <>{heading("A little health context", "This helps us skip questions that don’t apply to you.")}<div className="mt-5 grid grid-cols-3 gap-2">{(["male", "female", "prefer-not-to-say"] as const).map((item) => <Choice key={item} active={gate === item} onClick={() => { setGate(item); if (item !== "female") setForm((f) => ({ ...f, menstrual_cycle: null, pregnancy_related: null })); }} className="text-center capitalize">{item === "prefer-not-to-say" ? "Prefer not to say" : item}</Choice>)}</div><h2 className="mt-8 text-lg font-bold">Have you been diagnosed with any of these?</h2>{chips("diagnosed_conditions", conditions, "None")}{gate === "female" && <div className="mt-7 rounded-3xl bg-teal-50 p-5"><p className="font-bold">Menstrual cycle</p><div className="mt-3 grid gap-2">{["Regular", "Irregular", "Menopausal", "Not applicable"].map((item) => <Choice key={item} active={form.menstrual_cycle === item} onClick={() => update("menstrual_cycle", item as IntakeForm["menstrual_cycle"])}>{item}</Choice>)}</div><p className="mt-6 font-bold">Pregnancy-related</p><div className="mt-3 grid gap-2">{["Currently pregnant", "Postpartum <1 year", "Not applicable"].map((item) => <Choice key={item} active={form.pregnancy_related === item} onClick={() => update("pregnancy_related", item as IntakeForm["pregnancy_related"])}>{item}</Choice>)}</div></div>}</>;
+    if (screen === 4) return <>{heading("Any recent changes?", "These can sometimes affect the hair-growth cycle.")}<h2 className="mt-7 font-bold">Adult acne or oily skin?</h2><div className="mt-3"><YesNo value={form.adult_acne_oily_skin} onChange={(v) => update("adult_acne_oily_skin", v)} /></div><h2 className="mt-7 font-bold">Excess body or facial hair?</h2><div className="mt-3"><YesNo value={form.excess_body_facial_hair} onChange={(v) => update("excess_body_facial_hair", v)} /></div><h2 className="mt-7 font-bold">In the past 6 months</h2>{chips("past_6_months", [...triggers, "None of these"], "None of these")}</>;
+    if (screen === 5) return <Habits />;
+    if (screen === 6) return <Treatments />;
+    if (screen === 7) return <>{heading("Almost done", "Your answers help us prepare for your consultation.")}<h2 className="mt-7 font-bold">Any side effects from past treatments?</h2><div className="mt-3"><YesNo value={form.past_treatment_side_effects} onChange={(v) => update("past_treatment_side_effects", v)} /></div>{form.past_treatment_side_effects === "yes" && <div className="mt-4"><label className="text-sm font-bold">Please describe what happened</label><textarea className="mt-2 min-h-28 w-full rounded-2xl border border-stone-200 p-3" value={form.describe ?? ""} onChange={(e) => update("describe", e.target.value || null)} placeholder="Type your answer here" />{voiceAvailable ? <button type="button" onClick={startVoice} className="mt-3 min-h-11 rounded-xl border border-teal-700 px-4 text-sm font-bold text-teal-800">{recording ? "Listening… tap when finished" : "🎙 Dictate answer"}</button> : <p className="mt-2 text-sm text-stone-500">Voice typing isn’t supported in this browser. You can type your answer above.</p>}</div>}<h2 className="mt-7 font-bold">Preferred sample type</h2><div className="mt-3 grid gap-2">{["Saliva", "Blood", "Either"].map((item) => <Choice key={item} active={form.sample_type === item} onClick={() => update("sample_type", item as IntakeForm["sample_type"])}>{item}</Choice>)}</div><div className="mt-7 rounded-3xl bg-teal-50 p-5"><p className="font-bold">Do you consent to this intake being used for your consultation?</p><div className="mt-3"><YesNo value={form.consent} onChange={(v) => update("consent", v)} /></div>{form.consent !== "yes" && <p className="mt-2 text-sm text-stone-600">Consent is required to submit.</p>}</div></>;
+    const readable = [
+      ["Hair loss began", form.age_hair_loss_began ? `Age ${form.age_hair_loss_began}` : "Not answered"], ["Duration", form.duration ?? "Not answered"], ["Family history", form.family_history?.join(", ") || "Not answered"], ["Pattern", form.pattern?.join(", ") || "Not answered"], ["Diagnosed conditions", form.diagnosed_conditions?.join(", ") || "Not answered"], ["Adult acne / oily skin", form.adult_acne_oily_skin ?? "Not answered"], ["Excess body / facial hair", form.excess_body_facial_hair ?? "Not answered"], ["Recent changes", form.past_6_months?.join(", ") || "Not answered"], ["Sample type", form.sample_type ?? "Not answered"], ["Consent", form.consent ?? "Not answered"]
+    ];
+    return <>{heading("Check your answers", "Tap a section to edit it before submitting.")}<div className="mt-6 divide-y divide-stone-100 rounded-2xl border border-stone-200 px-4">{readable.map(([label, value]) => <div key={label} className="py-3"><p className="text-xs font-bold uppercase tracking-wider text-stone-500">{label}</p><p className="mt-1 text-sm font-medium">{value}</p></div>)}</div><div className="mt-6 grid gap-3">{[[1, "Your hair story"], [2, "What you’ve noticed"], [3, "Health context"], [4, "Recent changes"], [5, "Your habits"], [6, "Treatments"], [7, "Final details"]].map(([target, name]) => <button type="button" key={target} onClick={() => go(target as number)} className="flex min-h-14 items-center justify-between rounded-2xl border border-stone-200 px-4 text-left font-bold hover:border-teal-400"><span>{name}</span><span className="text-teal-700">Edit →</span></button>)}</div></>;
+  };
+  function Habits() { const yesHabit = (key: "smoking" | "alcohol" | "hard_water" | "heating_tools_styling_chemicals" | "salon_treatments") => setForm((f) => ({ ...f, habits: { ...f.habits, [key]: f.habits[key] === "yes" ? "no" : "yes" } })); return <>{heading("A few everyday habits", "Select anything that applies. Untapped items stay marked as no.")}<div className="mt-6 grid gap-2">{([ ["smoking", "Smoking"], ["alcohol", "Alcohol"], ["hard_water", "Hard water at home"], ["heating_tools_styling_chemicals", "Heat styling or chemicals"], ["salon_treatments", "Salon treatments"] ] as const).map(([key, label]) => <Choice key={key} active={form.habits[key] === "yes"} onClick={() => yesHabit(key)}>{label}</Choice>)}</div>{form.habits.smoking === "yes" && <div className="mt-4 rounded-2xl bg-teal-50 p-4"><p className="font-bold">How much do you smoke?</p><div className="mt-3 grid gap-2">{["Mild <5/day", "Moderate 5-10/day", "Severe >10/day"].map((item) => <Choice key={item} active={form.habits.smoking_severity === item} onClick={() => setForm((f) => ({ ...f, habits: { ...f.habits, smoking_severity: item as IntakeForm["habits"]["smoking_severity"] } }))}>{item}</Choice>)}</div></div>}<p className="mt-6 font-bold">How often do you wash your hair?</p><div className="mt-3 grid gap-2">{["Daily", "Alternate Days", "Weekly"].map((item) => <Choice key={item} active={form.habits.hair_wash_frequency === item} onClick={() => setForm((f) => ({ ...f, habits: { ...f.habits, hair_wash_frequency: item as IntakeForm["habits"]["hair_wash_frequency"] } }))}>{item}</Choice>)}</div>{form.habits.salon_treatments === "yes" && <textarea className="mt-5 min-h-24 w-full rounded-2xl border border-stone-200 p-3" value={form.habits.salon_treatment_detail ?? ""} onChange={(e) => setForm((f) => ({ ...f, habits: { ...f.habits, salon_treatment_detail: e.target.value || null } }))} placeholder="What salon treatments have you had?" />}</>; }
+  function Treatments() { const product = (name: string) => setForm((f) => ({ ...f, products: { ...f.products, [name]: { ...f.products[name], used: !f.products[name].used } } })); const procedure = (name: string) => setForm((f) => ({ ...f, procedures: { ...f.procedures, [name]: { ...f.procedures[name], done: !f.procedures[name].done } } })); return <>{heading("What have you already tried?", "Only expand the details for treatments you’ve used.")}<h2 className="mt-7 font-bold">Products</h2><div className="mt-3 grid gap-3">{PRODUCT_NAMES.map((name) => <div key={name}><Choice active={form.products[name].used} onClick={() => product(name)}>{name}</Choice>{form.products[name].used && <div className="mt-2 rounded-2xl bg-stone-50 p-4"><p className="text-sm font-bold">Duration</p><div className="mt-2 grid grid-cols-3 gap-2">{["<3mo", "3-6mo", ">6mo"].map((v) => <Choice key={v} active={form.products[name].duration === v} onClick={() => setForm((f) => ({ ...f, products: { ...f.products, [name]: { ...f.products[name], duration: v as "<3mo" | "3-6mo" | ">6mo" } } }))} className="text-center text-xs">{v}</Choice>)}</div><div className="mt-3 grid grid-cols-2 gap-3 text-sm"><div><p className="mb-1 font-semibold">Helped?</p><YesNo value={form.products[name].helped} onChange={(v) => setForm((f) => ({ ...f, products: { ...f.products, [name]: { ...f.products[name], helped: v } } }))} /></div><div><p className="mb-1 font-semibold">Side effects?</p><YesNo value={form.products[name].side_effects} onChange={(v) => setForm((f) => ({ ...f, products: { ...f.products, [name]: { ...f.products[name], side_effects: v } } }))} /></div></div></div>}</div>)}</div><h2 className="mt-8 font-bold">Procedures</h2><div className="mt-3 grid gap-3">{PROCEDURE_NAMES.map((name) => <div key={name}><Choice active={form.procedures[name].done} onClick={() => procedure(name)}>{name}</Choice>{form.procedures[name].done && <div className="mt-2 rounded-2xl bg-stone-50 p-4"><div className="grid grid-cols-3 gap-2">{["1-3", "4-6", ">6"].map((v) => <Choice key={v} active={form.procedures[name].sessions === v} onClick={() => setForm((f) => ({ ...f, procedures: { ...f.procedures, [name]: { ...f.procedures[name], sessions: v as "1-3" | "4-6" | ">6" } } }))} className="text-center text-xs">{v} sessions</Choice>)}</div><p className="mb-1 mt-3 text-sm font-semibold">Did it help?</p><YesNo value={form.procedures[name].helped} onChange={(v) => setForm((f) => ({ ...f, procedures: { ...f.procedures, [name]: { ...f.procedures[name], helped: v } } }))} /></div>}</div>)}</div></>; }
+
+  if (submitted) return <main className="min-h-screen bg-stone-50 p-5 sm:p-10"><section className="mx-auto max-w-2xl rounded-3xl bg-white p-6 shadow-sm"><p className="text-sm font-bold uppercase tracking-widest text-teal-700">Intake submitted</p><h1 className="mt-2 text-3xl font-bold">Thank you for sharing.</h1><pre className="mt-6 overflow-x-auto rounded-2xl bg-stone-950 p-5 text-xs leading-5 text-teal-100">{json}</pre></section></main>;
+  return <main className="min-h-screen bg-[#f8f7f2] px-4 py-5 text-stone-900 sm:py-10"><section className="mx-auto flex min-h-[calc(100vh-40px)] max-w-xl flex-col rounded-[2rem] bg-white px-5 py-6 shadow-[0_12px_40px_rgba(41,37,36,.08)] sm:px-8">{screen > 0 && <header><div className="mb-3 flex justify-between text-xs font-bold uppercase tracking-widest text-stone-500"><span>GenoRoot</span><span>{screen} of 8</span></div><div className="h-2 overflow-hidden rounded-full bg-stone-100"><div className="h-full rounded-full bg-teal-700" style={{ width: `${screen / 8 * 100}%` }} /></div></header>}<div className="flex-1 py-8">{screenContent()}</div><footer className="flex gap-3 border-t border-stone-100 pt-5">{screen > 0 && <Button variant="outline" size="lg" className="h-12 flex-1 rounded-2xl" onClick={() => go(screen - 1)}>Back</Button>}<Button size="lg" className="h-12 flex-1 rounded-2xl bg-teal-700 hover:bg-teal-800" disabled={disabled} onClick={next}>{screen === 0 ? "Start in 2 minutes" : screen === 8 ? "Submit intake" : "Continue"}</Button></footer></section>{resume && <div className="fixed inset-0 z-50 grid place-items-end bg-stone-950/30 p-4 sm:place-items-center"><div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl"><p className="text-sm font-bold text-teal-700">Welcome back</p><h2 className="mt-1 text-xl font-bold">Continue where you left off?</h2><p className="mt-2 text-sm text-stone-600">Your answers are saved privately on this device.</p><div className="mt-5 grid gap-2"><Button className="h-12 rounded-2xl bg-teal-700" onClick={() => { const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)!) as Saved; setForm(saved.form); setScreen(saved.screen); setGate(saved.gate); setResume(false); }}>Continue</Button><Button variant="outline" className="h-12 rounded-2xl" onClick={() => { localStorage.removeItem(STORAGE_KEY); setResume(false); }}>Start fresh</Button></div></div></div>}</main>;
 }
