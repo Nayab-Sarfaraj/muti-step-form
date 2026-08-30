@@ -46,6 +46,11 @@ const triggers = [
   "Recent surgery",
   "Change in location/water/air quality",
 ];
+const healthContextOptions = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "prefer-not-to-say", label: "Prefer not to say" },
+] as const;
 
 function MultiChoices({
   form,
@@ -238,15 +243,19 @@ export function HealthScreen({
         title="A little health context"
         copy="This helps us skip questions that don’t apply to you."
       />
-      <div className="mt-5 grid grid-cols-3 gap-2">
-        {(["male", "female", "prefer-not-to-say"] as const).map((item) => (
+      <div
+        className="mt-6 grid gap-3"
+        role="radiogroup"
+        aria-label="Health context"
+      >
+        {healthContextOptions.map(({ value, label }) => (
           <Choice
-            key={item}
-            active={gate === item}
-            onClick={() => setGateAndClear(item)}
-            className="text-center capitalize"
+            key={value}
+            active={gate === value}
+            onClick={() => setGateAndClear(value)}
+            className="flex items-center justify-center text-center"
           >
-            {item === "prefer-not-to-say" ? "Prefer not to say" : item}
+            <span>{label}</span>
           </Choice>
         ))}
       </div>

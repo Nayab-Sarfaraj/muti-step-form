@@ -25,9 +25,8 @@ export function Choice({
     <button
       type="button"
       onClick={onClick}
-      className={`min-h-12 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${active ? "border-teal-700 bg-teal-50 text-teal-950 ring-1 ring-teal-700" : "border-stone-200 bg-white text-stone-700 hover:border-teal-300"} ${className}`}
+      className={`min-h-12 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${active ? "border-2 border-teal-700 bg-teal-50 text-teal-950" : "border-stone-200 bg-white text-stone-700 hover:border-teal-300"} ${className}`}
     >
-      {active && <span className="mr-2 text-teal-700">✓</span>}
       {children}
     </button>
   );

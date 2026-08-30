@@ -44,6 +44,7 @@ export function TreatmentsScreen({
             <Choice
               active={form.products[name].used}
               onClick={() => toggleProduct(name)}
+              className="w-full"
             >
               {name}
             </Choice>
@@ -123,6 +124,7 @@ export function TreatmentsScreen({
             <Choice
               active={form.procedures[name].done}
               onClick={() => toggleProcedure(name)}
+              className="w-full"
             >
               {name}
             </Choice>
