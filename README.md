@@ -1,36 +1,29 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GenoRoot Hair & Scalp Intake
 
-## Getting Started
+A mobile-first, patient-facing 16-question hair and scalp clinic intake. It has no backend, login, or tracking: answers remain in the browser until the user submits the review screen.
 
-First, run the development server:
+## Run locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000). Use a phone-sized viewport for the intended experience.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Key decisions
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- **Autosave and resume:** after every screen transition, the complete form is saved under the versioned `genoroot-intake-v1` localStorage key. On return, patients can continue or start fresh. The key is removed after a successful submission.
+- **Clear, mobile-native questions:** long tables are collapsed into tap-friendly chips; follow-up details appear only when a product, procedure, or habit applies.
+- **Privacy and transparency:** an explicit sex gate controls Q6/Q7 visibility but is never included in the submitted JSON. Q6/Q7 are represented as `null` when not applicable.
+- **Voice as an enhancement:** Q14 uses the browser-native Web Speech API when available and always keeps a text field as the reliable fallback. No paid services or API keys are used.
 
-## Learn More
+## Data and verification
 
-To learn more about Next.js, take a look at the following resources:
+The final JSON has all 16 schema keys from `../intake-schema.json`; optional skipped answers use `null`, and untouched product/procedure rows use `false` with null follow-ups. The review screen presents the same answers in patient-readable language before submission.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Verified with `npm run lint` and a production build. For final delivery, run three complete manual personas: (1) male, confirming Q6/Q7 submit as null; (2) female, confirming both save; and (3) every Q11–Q13 follow-up plus the Q14 typed/voice path. Compare each output to the schema.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## With one more week
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+I would add automated browser tests for those three personas, accessibility testing with a screen reader, translated patient copy, and an optional secure clinician handoff.
