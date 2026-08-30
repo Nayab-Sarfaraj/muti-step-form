@@ -7,6 +7,8 @@ type Props = {
   primaryLabel: string;
   onBack: () => void;
   onNext: () => void;
+  secondaryLabel?: string;
+  onSecondary?: () => void;
   children: ReactNode;
 };
 
@@ -16,6 +18,8 @@ export function IntakeShell({
   primaryLabel,
   onBack,
   onNext,
+  secondaryLabel,
+  onSecondary,
   children,
 }: Props) {
   return (
@@ -38,7 +42,7 @@ export function IntakeShell({
         <div className="min-h-0 flex-1 overflow-y-auto py-6 pr-1 sm:py-8">
           {children}
         </div>
-        <footer className="flex shrink-0 gap-3 border-t border-stone-100 bg-white pt-4 pb-[max(env(safe-area-inset-bottom),0px)]">
+        <footer className="flex shrink-0 flex-wrap gap-3 border-t border-stone-100 bg-white pt-4 pb-[max(env(safe-area-inset-bottom),0px)]">
           {screen > 0 && (
             <Button
               variant="outline"
@@ -51,12 +55,22 @@ export function IntakeShell({
           )}
           <Button
             size="lg"
-            className="h-12 flex-1 rounded-2xl bg-teal-700 hover:bg-teal-800"
+            className="h-12 min-w-0 flex-1 rounded-2xl bg-teal-700 hover:bg-teal-800"
             disabled={disabled}
             onClick={onNext}
           >
             {primaryLabel}
           </Button>
+          {secondaryLabel && onSecondary && (
+            <Button
+              variant="outline"
+              size="lg"
+              className="h-12 w-full rounded-2xl border-teal-700 text-teal-800 hover:bg-teal-50"
+              onClick={onSecondary}
+            >
+              {secondaryLabel}
+            </Button>
+          )}
         </footer>
       </section>
     </main>

@@ -53,12 +53,14 @@ function MultiChoices({
   field,
   values,
   exclusive,
+  skipLabel,
 }: {
   form: IntakeForm;
   update: Update;
   field: MultiKey;
   values: string[];
   exclusive?: string;
+  skipLabel?: string;
 }) {
   const toggle = (value: string) => {
     const selected = form[field] ?? [];
@@ -83,6 +85,15 @@ function MultiChoices({
           {value}
         </Choice>
       ))}
+      {skipLabel && (
+        <button
+          type="button"
+          onClick={() => update(field, null)}
+          className="min-h-12 rounded-2xl border border-dashed border-stone-300 px-4 py-3 text-left text-sm font-semibold text-stone-600 hover:border-teal-300"
+        >
+          {skipLabel}
+        </button>
+      )}
     </div>
   );
 }
@@ -196,8 +207,8 @@ export function NoticeScreen({
         form={form}
         update={update}
         field="pattern"
-        values={[...patterns, "Not sure / skip this"]}
-        exclusive="Not sure / skip this"
+        values={patterns}
+        skipLabel="Skip this question"
       />
     </>
   );
@@ -309,8 +320,8 @@ export function RecentChangesScreen({
         form={form}
         update={update}
         field="past_6_months"
-        values={[...triggers, "None of these"]}
-        exclusive="None of these"
+        values={triggers}
+        skipLabel="Skip this question"
       />
     </>
   );

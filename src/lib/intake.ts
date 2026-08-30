@@ -105,4 +105,36 @@ export const createEmptyForm = (): IntakeForm => ({
   sample_type: null,
   consent: null,
 });
+
+// The UI may use schema-provided "None" and "Not applicable" choices to make
+// skipping clear. Submissions represent those choices as an explicit null.
+export const createSubmissionPayload = (form: IntakeForm): IntakeForm => ({
+  age_hair_loss_began: form.age_hair_loss_began,
+  duration: form.duration,
+  family_history: form.family_history?.includes("No known family history")
+    ? null
+    : form.family_history,
+  pattern: form.pattern?.includes("Not sure / skip this") ? null : form.pattern,
+  diagnosed_conditions: form.diagnosed_conditions?.includes("None")
+    ? null
+    : form.diagnosed_conditions,
+  menstrual_cycle:
+    form.menstrual_cycle === "Not applicable" ? null : form.menstrual_cycle,
+  pregnancy_related:
+    form.pregnancy_related === "Not applicable"
+      ? null
+      : form.pregnancy_related,
+  adult_acne_oily_skin: form.adult_acne_oily_skin,
+  excess_body_facial_hair: form.excess_body_facial_hair,
+  past_6_months: form.past_6_months?.includes("None of these")
+    ? null
+    : form.past_6_months,
+  habits: form.habits,
+  products: form.products,
+  procedures: form.procedures,
+  past_treatment_side_effects: form.past_treatment_side_effects,
+  describe: form.describe,
+  sample_type: form.sample_type,
+  consent: form.consent,
+});
 export const STORAGE_KEY = "genoroot-intake-v1";
