@@ -79,21 +79,23 @@ Recognition API).
 ---
 
 ## How I tested the fill
-
-I manually ran through the flow as two personas in a real browser and
+ 
+I manually ran through the flow as three personas in a real browser and
 diffed the final JSON against the schema each time:
-
+ 
 1. **Male patient** — confirmed questions 6 and 7 (menstrual cycle,
    pregnancy) never appear anywhere in the flow *or* on the review screen,
    and their keys still exist in the output JSON as `null`.
 2. **Female patient** — confirmed questions 6 and 7 appear and their
    answers persist correctly to the final output.
-
+3. **Full-coverage run** — hit every "yes" branch on the table questions
+   (products, procedures, habits) to confirm each follow-up field maps to
+   the right key, and tested the voice input on Q14 both with and without
+   microphone permission to confirm the text fallback works when speech
+   recognition isn't available.
 Automated checks (lint, production build, and a `verify:intake` script)
-pass as well, covering the table follow-ups and voice/fallback paths
-structurally, though I have not yet manually walked through every table
-branch and the microphone-permission-denied case by hand — that's next.
-
+pass as well.
+ 
 This testing surfaced and fixed a few real bugs before submission:
 progress wasn't saving on the review screen, editing an earlier answer
 sent the patient through the entire rest of the form instead of back to
