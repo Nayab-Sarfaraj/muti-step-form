@@ -262,16 +262,6 @@ export function HealthScreen({
           </Choice>
         ))}
       </div>
-      <h2 className="mt-8 text-lg font-bold">
-        Have you been diagnosed with any of these?
-      </h2>
-      <MultiChoices
-        form={form}
-        update={update}
-        field="diagnosed_conditions"
-        values={conditions}
-        exclusive="None"
-      />
       {gate === "female" && (
         <div className="mt-7 rounded-3xl bg-teal-50 p-5">
           <p className="font-bold">Menstrual cycle</p>
@@ -296,6 +286,16 @@ export function HealthScreen({
           />
         </div>
       )}
+      <h2 className="mt-8 text-lg font-bold">
+        Have you been diagnosed with any of these?
+      </h2>
+      <MultiChoices
+        form={form}
+        update={update}
+        field="diagnosed_conditions"
+        values={conditions}
+        exclusive="None"
+      />
     </>
   );
 }
