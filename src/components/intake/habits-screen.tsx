@@ -4,9 +4,15 @@ import { Choice, ChoiceList, Heading } from "./form-controls";
 export function HabitsScreen({
   form,
   setForm,
+  voiceAvailable,
+  recording,
+  startVoice,
 }: {
   form: IntakeForm;
   setForm: React.Dispatch<React.SetStateAction<IntakeForm>>;
+  voiceAvailable: boolean;
+  recording: boolean;
+  startVoice: () => void;
 }) {
   const toggle = (
     key:
@@ -65,6 +71,38 @@ export function HabitsScreen({
           />
         </div>
       )}
+      {form.habits.salon_treatments === "yes" && (
+        <div>
+          <textarea
+            className="mt-5 min-h-24 w-full rounded-2xl border border-stone-200 p-3"
+            value={form.habits.salon_treatment_detail ?? ""}
+            onChange={(event) =>
+              setForm((current) => ({
+                ...current,
+                habits: {
+                  ...current.habits,
+                  salon_treatment_detail: event.target.value || null,
+                },
+              }))
+            }
+            placeholder="What salon treatments have you had?"
+          />
+          {voiceAvailable ? (
+            <button
+              type="button"
+              onClick={startVoice}
+              className="mt-3 min-h-11 rounded-xl border border-teal-700 px-4 text-sm font-bold text-teal-800"
+            >
+              {recording ? "Listening... tap when finished" : "Dictate answer"}
+            </button>
+          ) : (
+            <p className="mt-2 text-sm text-stone-500">
+              Voice typing is not supported in this browser. You can type your
+              answer above.
+            </p>
+          )}
+        </div>
+      )}
       <p className="mt-6 font-bold">How often do you wash your hair?</p>
       <ChoiceList
         values={["Daily", "Alternate Days", "Weekly"] as const}
@@ -76,22 +114,6 @@ export function HabitsScreen({
           }))
         }
       />
-      {form.habits.salon_treatments === "yes" && (
-        <textarea
-          className="mt-5 min-h-24 w-full rounded-2xl border border-stone-200 p-3"
-          value={form.habits.salon_treatment_detail ?? ""}
-          onChange={(event) =>
-            setForm((current) => ({
-              ...current,
-              habits: {
-                ...current.habits,
-                salon_treatment_detail: event.target.value || null,
-              },
-            }))
-          }
-          placeholder="What salon treatments have you had?"
-        />
-      )}
     </>
   );
 }

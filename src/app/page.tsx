@@ -48,7 +48,7 @@ export default function Home() {
   }, [editSessionActive, form, gate, screen]);
 
   const validateAge = () => { const valid = Boolean(form.age_hair_loss_began && form.age_hair_loss_began > 0 && form.age_hair_loss_began < 121); setAgeError(valid ? "" : "Enter an age between 1 and 120."); return valid; };
-  const startVoice = () => { const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition; if (!Recognition) return; const recognition = new Recognition(); recognition.lang = "en-IN"; recognition.interimResults = false; recognition.onstart = () => setRecording(true); recognition.onend = () => setRecording(false); recognition.onerror = () => setRecording(false); recognition.onresult = (event) => update("describe", [form.describe, event.results[0][0].transcript].filter(Boolean).join(" ")); recognition.start(); };
+  const startVoice = (field: "describe" | "salon_treatment_detail") => { const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition; if (!Recognition) return; const recognition = new Recognition(); recognition.lang = "en-IN"; recognition.interimResults = false; recognition.onstart = () => setRecording(true); recognition.onend = () => setRecording(false); recognition.onerror = () => setRecording(false); recognition.onresult = (event) => setForm((current) => { const transcript = event.results[0][0].transcript; if (field === "describe") return { ...current, describe: [current.describe, transcript].filter(Boolean).join(" ") || null }; return { ...current, habits: { ...current.habits, salon_treatment_detail: [current.habits.salon_treatment_detail, transcript].filter(Boolean).join(" ") || null } }; }); recognition.start(); };
   const next = () => { if (screen === 1 && !validateAge()) return; if (screen === 8) { localStorage.removeItem(STORAGE_KEY); setSubmitted(true); return; } go(screen + 1); };
   const disabled = (screen === 1 && (!form.age_hair_loss_began || !form.duration)) || (screen === 7 && form.consent !== "yes");
   const content = [
@@ -57,9 +57,9 @@ export default function Home() {
     <NoticeScreen key="notice" form={form} update={update} />,
     <HealthScreen key="health" form={form} update={update} gate={gate} setGate={setGate} />,
     <RecentChangesScreen key="changes" form={form} update={update} />,
-    <HabitsScreen key="habits" form={form} setForm={setForm} />,
+    <HabitsScreen key="habits" form={form} setForm={setForm} voiceAvailable={voiceAvailable} recording={recording} startVoice={() => startVoice("salon_treatment_detail")} />,
     <TreatmentsScreen key="treatments" form={form} setForm={setForm} />,
-    <FinalDetailsScreen key="details" form={form} update={update} voiceAvailable={voiceAvailable} recording={recording} startVoice={startVoice} />,
+    <FinalDetailsScreen key="details" form={form} update={update} voiceAvailable={voiceAvailable} recording={recording} startVoice={() => startVoice("describe")} />,
     <ReviewScreen key="review" form={form} showFemaleOnlyFields={gate === "female"} onEdit={(target) => { setEditSessionActive(true); go(target); }} />,
   ];
   const json = useMemo(() => JSON.stringify(createSubmissionPayload(form), null, 2), [form]);

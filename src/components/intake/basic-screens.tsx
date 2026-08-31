@@ -146,7 +146,9 @@ export function HairStoryScreen({
             onClick={() =>
               update(
                 "age_hair_loss_began",
-                Math.max(1, (form.age_hair_loss_began ?? 20) - 1),
+                form.age_hair_loss_began === null
+                  ? 20
+                  : Math.max(1, form.age_hair_loss_began - 1),
               )
             }
           >
@@ -171,7 +173,9 @@ export function HairStoryScreen({
             onClick={() =>
               update(
                 "age_hair_loss_began",
-                (form.age_hair_loss_began ?? 19) + 1,
+                form.age_hair_loss_began === null
+                  ? 20
+                  : form.age_hair_loss_began + 1,
               )
             }
           >
