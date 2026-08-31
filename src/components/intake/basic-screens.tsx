@@ -257,7 +257,6 @@ export function HealthScreen({
             key={value}
             active={gate === value}
             onClick={() => setGateAndClear(value)}
-            className="flex items-center justify-center text-center"
           >
             <span>{label}</span>
           </Choice>
